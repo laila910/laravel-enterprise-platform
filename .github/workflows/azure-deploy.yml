@@ -47,7 +47,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.3'
           extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, mysql, redis
           coverage: xdebug
 
@@ -61,7 +61,7 @@ jobs:
 
       - name: Install Composer dependencies
         working-directory: ./src
-        run: composer install --no-progress --prefer-dist --optimize-autoloader
+        run: composer update --no-progress --prefer-dist --optimize-autoloader
 
       - name: Generate application key
         working-directory: ./src
