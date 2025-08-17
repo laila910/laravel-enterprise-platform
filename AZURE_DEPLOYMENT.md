@@ -168,10 +168,10 @@ variables:
 
 ### 2. Create Branch Policies
 
-Set up branch policies for `main` and `develop` branches:
+Set up branch policies for `master` and `develop` branches:
 
 1. Go to **Repos** → **Branches**
-2. Click on `main` branch → **Branch policies**
+2. Click on `master` branch → **Branch policies**
 3. Enable:
    - Require a minimum number of reviewers (2)
    - Check for linked work items
@@ -184,7 +184,7 @@ Set up branch policies for `main` and `develop` branches:
 The pipeline automatically deploys when:
 
 - **Staging**: Push/merge to `develop` branch
-- **Production**: Push/merge to `main` branch
+- **Production**: Push/merge to `master` branch
 
 ### Manual Deployment
 
@@ -227,7 +227,7 @@ chmod +x scripts/azure-deploy.sh
 
 ### 4. Deploy to Production
 
-- Deploys to production environment (main branch)
+- Deploys to production environment (master branch)
 - Uses production environment variables
 - Updates Azure Web App with new container image
 

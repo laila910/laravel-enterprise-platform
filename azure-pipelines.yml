@@ -4,7 +4,7 @@
 trigger:
   branches:
     include:
-      - main
+      - master
       - develop
   paths:
     exclude:
@@ -14,7 +14,7 @@ trigger:
 pr:
   branches:
     include:
-      - main
+      - master
       - develop
 
 variables:
@@ -193,7 +193,7 @@ stages:
   - stage: BuildProduction
     displayName: 'Build Production Images'
     dependsOn: BuildAndTest
-    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.SourceBranch'], 'refs/heads/develop')))
+    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['Build.SourceBranch'], 'refs/heads/develop')))
     jobs:
       - job: BuildProd
         displayName: 'Build Production Images'
@@ -272,7 +272,7 @@ stages:
   - stage: DeployProduction
     displayName: 'Deploy to Production'
     dependsOn: BuildProduction
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
     jobs:
       - deployment: DeployToProduction
         displayName: 'Deploy to Production Environment'
@@ -320,7 +320,7 @@ stages:
               targetType: 'inline'
               script: |
                 # Determine the environment URL
-                if [ "$(Build.SourceBranch)" = "refs/heads/main" ]; then
+                if [ "$(Build.SourceBranch)" = "refs/heads/master" ]; then
                   APP_URL="https://$(webAppName).azurewebsites.net"
                 else
                   APP_URL="https://$(webAppName)-staging.azurewebsites.net"
