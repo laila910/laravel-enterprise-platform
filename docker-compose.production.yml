@@ -1,0 +1,157 @@
+version: '3.8'
+
+services:
+  # Laravel Application (Production)
+  app:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+      target: production
+    container_name: laravel_app_prod
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - storage_data:/var/www/html/storage
+      - ./docker/app/php.production.ini:/usr/local/etc/php/conf.d/php.ini
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - LOG_CHANNEL=stderr
+      - SESSION_DRIVER=redis
+      - CACHE_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+    networks:
+      - laravel_network
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD", "php", "artisan", "tinker", "--execute=echo 'OK';"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Nginx Web Server (Production)
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    container_name: laravel_nginx_prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - storage_data:/var/www/html/storage:ro
+      - ./docker/nginx/ssl:/etc/nginx/ssl:ro
+    networks:
+      - laravel_network
+    depends_on:
+      - app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Redis Cache (Production)
+  redis:
+    image: redis:7-alpine
+    container_name: laravel_redis_prod
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    volumes:
+      - redis_data:/data
+    networks:
+      - laravel_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Queue Worker (Production)
+  queue:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+      target: production
+    container_name: laravel_queue_prod
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - storage_data:/var/www/html/storage
+    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600 --daemon
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+    networks:
+      - laravel_network
+    depends_on:
+      - app
+      - redis
+    deploy:
+      replicas: 2
+    healthcheck:
+      test: ["CMD", "php", "artisan", "queue:monitor"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+
+  # Scheduler (Production)
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+      target: production
+    container_name: laravel_scheduler_prod
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - storage_data:/var/www/html/storage
+    command: >
+      sh -c "while true; do
+        php artisan schedule:run --verbose --no-interaction
+        sleep 60
+      done"
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+    networks:
+      - laravel_network
+    depends_on:
+      - app
+      - redis
+
+  # Log collector (for centralized logging)
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.5.0
+    container_name: laravel_filebeat
+    restart: unless-stopped
+    user: root
+    volumes:
+      - ./docker/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - storage_data:/var/www/html/storage:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - ELASTICSEARCH_HOSTS=${ELASTICSEARCH_HOSTS:-}
+      - KIBANA_HOST=${KIBANA_HOST:-}
+    networks:
+      - laravel_network
+    profiles:
+      - logging
+
+volumes:
+  storage_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  laravel_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
