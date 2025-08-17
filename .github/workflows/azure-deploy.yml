@@ -81,8 +81,9 @@ jobs:
       - name: Run PHPUnit tests
         working-directory: ./src
         run: |
-          php artisan test --coverage-clover coverage.xml || true
-          # Ensure coverage file exists even if tests fail
+          # Try with coverage first, fallback to simple test run if no driver available
+          php artisan test --coverage-clover coverage.xml 2>/dev/null || php artisan test
+          # Ensure coverage file exists for upload step
           touch coverage.xml
 
       - name: Run PHP CS Fixer

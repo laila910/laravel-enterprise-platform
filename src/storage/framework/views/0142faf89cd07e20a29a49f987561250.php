@@ -77,4 +77,4 @@
             </p>
         </div>
     </body>
-</html><?php /**PATH /var/www/html/resources/views/welcome.blade.php ENDPATH**/ ?>
+</html><?php /**PATH /home/laila_ibrahim/projects/Docker-laravel-project/src/resources/views/welcome.blade.php ENDPATH**/ ?>

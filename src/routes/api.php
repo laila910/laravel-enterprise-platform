@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\HealthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -18,11 +19,4 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::get('/status', function () {
-    return response()->json([
-        'api' => 'Laravel Docker API',
-        'version' => '1.0.0',
-        'status' => 'active',
-        'timestamp' => now()->toISOString(),
-    ]);
-})->name('api.status');
+Route::get('/status', [HealthController::class, 'status']);

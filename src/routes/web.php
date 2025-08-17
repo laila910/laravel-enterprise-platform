@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\HealthController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -17,12 +18,4 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/health', function () {
-    return response()->json([
-        'status' => 'ok',
-        'timestamp' => now()->toISOString(),
-        'environment' => app()->environment(),
-        'php_version' => PHP_VERSION,
-        'laravel_version' => app()->version(),
-    ]);
-})->name('health.check');
+Route::get('/app-health', [HealthController::class, 'health']);
