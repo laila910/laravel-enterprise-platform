@@ -123,7 +123,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                docker-compose exec -T app composer install --no-interaction --prefer-dist --optimize-autoloader
+                docker-compose exec -T app composer update --no-interaction --prefer-dist --optimize-autoloader
                 docker-compose exec -T app php artisan key:generate
           
           # Run code quality checks
